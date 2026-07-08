@@ -1,0 +1,6 @@
+name: tamable-phantoms
+version: '${version}'
+
+main: io.github.anjoismysign.tamablephantoms.TamablePhantoms
+api-version: '26.1.2'
+load: POSTWORLD
