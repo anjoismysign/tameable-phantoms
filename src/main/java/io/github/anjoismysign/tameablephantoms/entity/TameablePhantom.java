@@ -1,4 +1,4 @@
-package io.github.anjoismysign.tamablephantoms.entity;
+package io.github.anjoismysign.tameablephantoms.entity;
 
 import org.bukkit.entity.AnimalTamer;
 import org.bukkit.entity.Phantom;

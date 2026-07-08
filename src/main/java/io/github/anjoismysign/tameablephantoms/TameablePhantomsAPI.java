@@ -1,13 +1,13 @@
-package io.github.anjoismysign.tamablephantoms;
+package io.github.anjoismysign.tameablephantoms;
 
-import io.github.anjoismysign.tamablephantoms.entity.TameablePhantom;
+import io.github.anjoismysign.tameablephantoms.entity.TameablePhantom;
 import org.bukkit.entity.AnimalTamer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Phantom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface TamablePhantomsAPI {
+public interface TameablePhantomsAPI {
 
     @Nullable
     TameablePhantom isTameablePhantom(@NotNull Entity entity);

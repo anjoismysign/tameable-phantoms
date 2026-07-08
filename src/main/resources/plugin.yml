@@ -1,6 +1,5 @@
-name: tamable-phantoms
-version: '${version}'
-
-main: io.github.anjoismysign.tamablephantoms.TamablePhantoms
-api-version: '26.1.2'
+name: tameable-phantoms
+version: 1.0
+main: io.github.anjoismysign.tameablephantoms.TameablePhantoms
+api-version: 26.1.2
 load: POSTWORLD

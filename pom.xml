@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.anjoismysign</groupId>
-    <artifactId>tamable-phantoms</artifactId>
+    <artifactId>tameable-phantoms</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
-    <name>tamable-phantoms</name>
+    <name>tameable-phantoms</name>
 
     <properties>
         <java.version>25</java.version>

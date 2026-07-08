@@ -1,8 +1,8 @@
-package io.github.anjoismysign.tamablephantoms;
+package io.github.anjoismysign.tameablephantoms;
 
 import com.destroystokyo.paper.entity.ai.VanillaGoal;
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
-import io.github.anjoismysign.tamablephantoms.entity.TameablePhantom;
+import io.github.anjoismysign.tameablephantoms.entity.TameablePhantom;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -39,11 +39,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
-public final class TamablePhantoms extends JavaPlugin implements TamablePhantomsAPI, Listener {
+public final class TameablePhantoms extends JavaPlugin implements TameablePhantomsAPI, Listener {
 
-    private static TamablePhantoms instance;
+    private static TameablePhantoms instance;
 
-    public static TamablePhantoms getInstance(){
+    public static TameablePhantoms getInstance(){
         return instance;
     }
 
