@@ -19,6 +19,7 @@ import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDismountEvent;
+import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.event.player.PlayerInputEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.EntityEquipment;
@@ -31,8 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
@@ -47,6 +50,7 @@ public final class TamablePhantoms extends JavaPlugin implements TamablePhantoms
     private NamespacedKey tamerKey;
     private NamespacedKey saddleKey;
     private final Map<UUID, TameablePhantom> tameablePhantoms = new WeakHashMap<>();
+    private final Set<TameablePhantom> unriding = new HashSet<>();
 
     @Override
     public void onEnable() {
@@ -144,13 +148,24 @@ public final class TamablePhantoms extends JavaPlugin implements TamablePhantoms
         if (tameablePhantom == null) {
             return;
         }
-        if (!tameablePhantom.hasSaddle()){
+        if (!tameablePhantom.hasSaddle()) {
             return;
         }
         var phantom = tameablePhantom.getPhantom();
         if (hasPlayer(phantom) != null) {
             return;
         }
+
+        // Restore the hologram of whatever tamed phantom the player is currently riding
+        @Nullable var currentVehicle = player.getVehicle();
+        if (currentVehicle != null) {
+            @Nullable var current = isTameablePhantom(currentVehicle);
+            if (current != null) {
+                currentVehicle.removePassenger(player);
+                unriding.add(current);
+            }
+        }
+
         updateHologram(tameablePhantom, false);
         phantom.addPassenger(player);
     }
@@ -167,11 +182,22 @@ public final class TamablePhantoms extends JavaPlugin implements TamablePhantoms
             return;
         }
         var player = (Player) dismounter;
-        if (player.getCurrentInput().isSneak()){
+        if (player.getCurrentInput().isSneak() || unriding.contains(tameablePhantom)){
+            unriding.remove(tameablePhantom);
             updateHologram(tameablePhantom, true);
             return;
         }
         event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onRemove(EntityRemoveEvent event){
+        var entity = event.getEntity();
+        @Nullable var tameablePhantom = isTameablePhantom(entity);
+        if (tameablePhantom == null){
+            return;
+        }
+        updateHologram(tameablePhantom, false);
     }
 
     @EventHandler
@@ -217,19 +243,21 @@ public final class TamablePhantoms extends JavaPlugin implements TamablePhantoms
     @NotNull
     @Override
     public TameablePhantom tame(@NotNull Phantom phantom, @NotNull AnimalTamer tamer) {
-        var uniqueId = phantom.getUniqueId();
-        @Nullable var result = tameablePhantoms.get(uniqueId);
+        @Nullable var result = isTameablePhantom(phantom);
         if (result != null) {
             throw new IllegalStateException("Phantom is already tamed. Call #isTamed(Phantom) before calling #tame(Phantom, AnimalTamer).");
         }
         var dataContainer = phantom.getPersistentDataContainer();
         dataContainer.set(tamerKey, PersistentDataType.STRING, tamer.getUniqueId().toString().replace("-", ""));
-        return mutate(phantom, tamer);
+        phantom.setPersistent(true);
+        var tameablePhantom = mutate(phantom, tamer);
+        updateHologram(tameablePhantom, hasPlayer(phantom) == null);
+        return tameablePhantom;
     }
 
     @Override
     public void setSaddle(@NotNull Phantom phantom, boolean saddle){
-        @Nullable var tameablePhantom = tameablePhantoms.get(phantom.getUniqueId());
+        @Nullable var tameablePhantom = isTameablePhantom(phantom);
         if (tameablePhantom == null) {
             return;
         }
