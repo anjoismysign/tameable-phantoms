@@ -95,7 +95,7 @@ public final class TameablePhantoms extends JavaPlugin implements TameablePhanto
         }
         var phantom = tameablePhantom.getPhantom();
         var input = event.getInput();
-        if (!input.isForward() && !input.isBackward()){
+        if (!input.isForward() && !input.isBackward() || input.isSneak()){
             phantom.setAI(false);
             return;
         }
