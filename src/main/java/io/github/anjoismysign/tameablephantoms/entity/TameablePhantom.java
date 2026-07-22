@@ -44,7 +44,8 @@ public interface TameablePhantom {
 
     /**
      * Sets the ability to this phantom.
-     * @param ability null to remove the previous,
+     * @param ability null to remove the previous, the ability NamespacedKey otherwise
+     * @see io.github.anjoismysign.tameablephantoms.ability.TameablePhantomAbilityRegistry
      */
     void setAbility(@Nullable NamespacedKey ability);
 
