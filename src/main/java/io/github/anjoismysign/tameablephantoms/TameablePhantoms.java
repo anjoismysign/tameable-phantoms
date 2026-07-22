@@ -2,6 +2,8 @@ package io.github.anjoismysign.tameablephantoms;
 
 import com.destroystokyo.paper.entity.ai.VanillaGoal;
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
+import io.github.anjoismysign.tameablephantoms.ability.TameablePhantomAbility;
+import io.github.anjoismysign.tameablephantoms.ability.TameablePhantomAbilityRegistry;
 import io.github.anjoismysign.tameablephantoms.entity.TameablePhantom;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -49,26 +52,40 @@ public final class TameablePhantoms extends JavaPlugin implements TameablePhanto
 
     private NamespacedKey tamerKey;
     private NamespacedKey saddleKey;
+    private NamespacedKey abilityKey;
     private final Map<UUID, TameablePhantom> tameablePhantoms = new WeakHashMap<>();
     private final Set<TameablePhantom> unriding = new HashSet<>();
+    private final Map<NamespacedKey, TameablePhantomAbility> abilityMap = new HashMap<>();
 
     @Override
     public void onEnable() {
         instance = this;
         tamerKey = new NamespacedKey(this, "tamer");
         saddleKey = new NamespacedKey(this, "saddle");
+        abilityKey = new NamespacedKey(this, "abilityKey");
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskTimer(this, this::tick, 1L, 1L);
     }
 
     private void tick() {
-        tameablePhantoms.values().stream().map(TameablePhantom::getPhantom).filter(Entity::isValid).forEach(phantom -> {
+        tameablePhantoms.values().forEach(tameablePhantom -> {
+            var phantom = tameablePhantom.getPhantom();
+            if (!phantom.isValid()){
+                return;
+            }
             @Nullable var player = hasPlayer(phantom);
             if (player == null){
                 phantom.setRotation(phantom.getYaw(), 0);
                 return;
             }
             var input = player.getCurrentInput();
+            if (input.isJump()){
+                @Nullable var abilityKey = tameablePhantom.getAbility();
+                @Nullable var ability = abilityKey == null ? null : abilityMap.get(abilityKey);
+                if (ability != null){
+                    ability.run(tameablePhantom, player);
+                }
+            }
             var playerLocation = player.getEyeLocation();
             var direction = player.getEyeLocation().getDirection();
             var speed = Objects.requireNonNull(phantom.getAttribute(Attribute.MOVEMENT_SPEED), "phantoms don't have movement_speed attribute").getValue() * Objects.requireNonNull(phantom.getAttribute(Attribute.SCALE), "phantoms don't have scale attribute").getValue();
@@ -236,6 +253,16 @@ public final class TameablePhantoms extends JavaPlugin implements TameablePhanto
     }
 
     @Override
+    public @NotNull TameablePhantomAbilityRegistry getAbilityRegistry() {
+        return (namespacedKey, ability) -> {
+            @Nullable var previous = abilityMap.putIfAbsent(namespacedKey, ability);
+            if (previous != null) {
+                throw new RuntimeException("TameablePhantomAbility already mapped");
+            }
+        };
+    }
+
+    @Override
     public @Nullable TameablePhantom isTameablePhantom(@NotNull Entity entity) {
         return tameablePhantoms.get(entity.getUniqueId());
     }
@@ -269,6 +296,7 @@ public final class TameablePhantoms extends JavaPlugin implements TameablePhanto
     }
 
     private TameablePhantom mutate(@NotNull Phantom phantom, @NotNull AnimalTamer tamer) {
+        var dataContainer = phantom.getPersistentDataContainer();
         var tameablePhantom = new TameablePhantom() {
             @Override
             public @NotNull Phantom getPhantom() {
@@ -282,7 +310,29 @@ public final class TameablePhantoms extends JavaPlugin implements TameablePhanto
 
             @Override
             public boolean hasSaddle() {
-                return phantom.getPersistentDataContainer().getOrDefault(saddleKey, PersistentDataType.BOOLEAN, false);
+                return dataContainer.getOrDefault(saddleKey, PersistentDataType.BOOLEAN, false);
+            }
+
+            @Override
+            public @Nullable NamespacedKey getAbility() {
+                @Nullable var toString = dataContainer.get(abilityKey, PersistentDataType.STRING);
+                if (toString == null){
+                    return null;
+                }
+                var split = toString.split(":");
+                if (split.length != 2){
+                    return null;
+                }
+                return new NamespacedKey(split[0], split[1]);
+            }
+
+            @Override
+            public void setAbility(@Nullable NamespacedKey ability) {
+                if (ability == null){
+                    dataContainer.remove(abilityKey);
+                    return;
+                }
+                dataContainer.set(abilityKey, PersistentDataType.STRING, ability.toString());
             }
         };
         phantom.setShouldBurnInDay(false);

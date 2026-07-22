@@ -1,5 +1,6 @@
 package io.github.anjoismysign.tameablephantoms;
 
+import io.github.anjoismysign.tameablephantoms.ability.TameablePhantomAbilityRegistry;
 import io.github.anjoismysign.tameablephantoms.entity.TameablePhantom;
 import org.bukkit.entity.AnimalTamer;
 import org.bukkit.entity.Entity;
@@ -13,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
  * and equip them with saddles.
  */
 public interface TameablePhantomsAPI {
+
+    @NotNull
+    TameablePhantomAbilityRegistry getAbilityRegistry();
 
     /**
      * Checks if the given entity is a tameable phantom.
